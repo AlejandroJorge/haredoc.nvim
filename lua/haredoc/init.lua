@@ -3,6 +3,7 @@ local M = {}
 local defaults = {
   see_docs = "K",
   close = { "q", "<Esc>" },
+  command = "haredoc",
 }
 
 local config = vim.deepcopy(defaults)
@@ -40,6 +41,14 @@ function M.show()
     return
   end
 
+  if vim.fn.executable(config.command) ~= 1 then
+    vim.notify(
+      "Executable not found: " .. config.command .. "; install haredoc or set opts.command",
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
   local width = math.max(1, math.min(90, vim.o.columns - 4))
   local height = math.max(1, math.min(14, vim.o.lines - 4))
   local buf = vim.api.nvim_create_buf(false, true)
@@ -58,13 +67,16 @@ function M.show()
 
   vim.bo[buf].bufhidden = "wipe"
 
-  local job = vim.fn.jobstart({ "haredoc", symbol }, {
+  local job = vim.fn.jobstart({ config.command, symbol }, {
     term = true,
   })
 
   if job <= 0 then
     vim.api.nvim_win_close(win, true)
-    vim.notify("Failed to start haredoc", vim.log.levels.ERROR)
+    vim.notify(
+      "Failed to start " .. config.command .. "; is haredoc installed?",
+      vim.log.levels.ERROR
+    )
     return
   end
 
